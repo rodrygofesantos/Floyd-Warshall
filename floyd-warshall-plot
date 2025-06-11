@@ -1,0 +1,76 @@
+import matplotlib.pyplot as plt
+import networkx as nx
+
+# Configurações
+V = 4
+labels = ['A', 'B', 'C', 'D']
+INF = float('inf')
+
+# Matriz de adjacência inicial
+graph = [
+    [0,   3,   INF, 7],
+    [8,   0,   2,   INF],
+    [5,   INF, 0,   1],
+    [2,   INF, INF, 0]
+]
+
+# Função de impressão da matriz formatada
+def print_iteration_matrix(matrix, k):
+    print(f"\n>>> Iteração k = {labels[k]} ({k})")
+    header = "    " + "".join(f"{labels[j]:>5}" for j in range(V))
+    print(header)
+    print("    " + "-" * (5 * V))
+    for i in range(V):
+        row = f"{labels[i]} |"
+        for j in range(V):
+            val = matrix[i][j]
+            text = "INF" if val == INF else str(val)
+            row += f"{text:>5}"
+        print(row)
+
+# Algoritmo de Floyd-Warshall com impressão das iterações
+def floyd_warshall_verbose(graph):
+    dist = [[graph[i][j] for j in range(V)] for i in range(V)]
+    print(">>> MATRIZ INICIAL")
+    print_iteration_matrix(dist, 0)
+
+    for k in range(V):
+        for i in range(V):
+            for j in range(V):
+                if dist[i][k] + dist[k][j] < dist[i][j]:
+                    dist[i][j] = dist[i][k] + dist[k][j]
+        print_iteration_matrix(dist, k)
+
+    return dist
+
+# Executar o algoritmo com saída detalhada
+shortest_paths = floyd_warshall_verbose(graph)
+
+# Criar grafo final com os menores caminhos encontrados
+G = nx.DiGraph()
+for i in range(V):
+    G.add_node(labels[i])
+
+for i in range(V):
+    for j in range(V):
+        if i != j and shortest_paths[i][j] != INF:
+            G.add_edge(labels[i], labels[j], weight=shortest_paths[i][j])
+
+# Layout e rótulos
+pos = nx.spring_layout(G, seed=42)
+edge_labels = nx.get_edge_attributes(G, 'weight')
+
+# Plotar o grafo resultante
+plt.figure(figsize=(8, 6))
+nx.draw(
+    G, pos, with_labels=True, node_size=2000,
+    node_color='lightblue', font_size=14, font_weight='bold',
+    arrows=True
+)
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=12)
+plt.title("Menores Caminhos entre Todos os Pares (Floyd-Warshall)")
+plt.axis('off')
+
+# Salvar imagem
+plt.savefig("grafo_menores_caminhos_floydwarshall.png", bbox_inches='tight')
+plt.show()
